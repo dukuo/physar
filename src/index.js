@@ -1,4 +1,4 @@
-import { generate as generateUUID  } from 'short-uuid'
+import { generateUUID } from './utils'
 
 export default class PhysicsWorld {
   
