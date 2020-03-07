@@ -1,0 +1,31 @@
+{
+  "name": "physar",
+  "version": "0.1.0",
+  "main": "src/index.js",
+  "author": "Dilip Ramirez <dilip.ramirez@gmail.com>",
+  "license": "ISC",
+  "scripts": {
+    "test": " echo \"No tests found.\""
+  },
+  "dependencies": {
+    "short-uuid": "^3.1.1"
+  },
+  "description": "Physar enables Cannon.js physics in your Spark AR projects.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dukuo/physar.git"
+  },
+  "keywords": [
+    "physar",
+    "physics",
+    "ar",
+    "sparkar",
+    "spark",
+    "lens",
+    "xr"
+  ],
+  "bugs": {
+    "url": "https://github.com/dukuo/physar/issues"
+  },
+  "homepage": "https://github.com/dukuo/physar#readme"
+}
