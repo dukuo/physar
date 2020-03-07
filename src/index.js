@@ -1,6 +1,6 @@
 import { generateUUID } from './utils'
 
-export default class PhysicsWorld {
+export default class Physar {
   
   constructor( gravity ) {
 
