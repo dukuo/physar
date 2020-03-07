@@ -15,11 +15,11 @@ module.exports = {
   },
   optimization: {
     // disable minification while debugging
-    minimize: false
+    minimize: true
   },
   output: {
     filename: 'script.js',
-    path: path.resolve(__dirname, 'PhysicsWithCannonLibFromSparkAR_01', 'scripts')
+    path: path.resolve(__dirname, 'physar_examples', 'scripts')
   },
   externals: {
     Animation: 'commonjs Animation',

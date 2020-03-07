@@ -1,13 +1,14 @@
 
-import PhysicsWorld from '../../index.js'
+import PhysicsWorld from 'physar'
 
 const Scene = require('Scene');
 
 const sphere = Scene.root.find('SphereObject');
-const cube = Scene.root.find('Cube01');
+const cube = Scene.root.find('Cube01')
 const plane = Scene.root.find('plane0')
 
 const physicsWorld = new PhysicsWorld({ x: 0, y: -9.82, z:0 })
+
 
 const sphereProps = {
   body: {
