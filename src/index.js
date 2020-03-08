@@ -371,7 +371,7 @@ export default class Physar {
     this.worldConstraints.push({
       id,
       constraint,
-      isActive = true
+      isActive: true
     })
 
     return id
