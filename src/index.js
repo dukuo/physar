@@ -322,7 +322,7 @@ export default class Physar {
     // We need at least two bodies to make a constraint.
     if ( !params.bodyA || !params.bodyB) return
     
-    let { bodyA, bodyB, pivotA, pivotB, axisA, axisB } = params
+    let [bodyA, bodyB, pivotA, pivotB, axisA, axisB] = params
     const options = {
       pivotA,
       pivotB,
@@ -404,12 +404,12 @@ export default class Physar {
 
   resumeConstraint(id) {
     const c = this.find('constraint', id)
-    const {id, constraint} = c
+    const [id, constraint] = c
 
     if(c && c.isActive == false) {
 
       this.world.addConstraint(constraint)
-      
+
       const idx = this.worldConstraints.indexOf(c)
       this.worldConstraints[idx].isActive = true
     }

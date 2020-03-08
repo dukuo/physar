@@ -59,6 +59,8 @@ const groundProps = {
   }
 }
 physar.createObject(plane, 'ground', groundProps)
-physar.createObject(sphere, 'sphere', sphereProps)
-physar.createObject(cube, 'box', cubeProps)
+const sphereID = physar.createObject(sphere, 'sphere', sphereProps)
+const boxID = physar.createObject(cube, 'box', cubeProps)
+
+const constraint = physar.addConstrait(sphereID, boxID)
 physar.start()
