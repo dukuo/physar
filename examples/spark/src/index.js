@@ -1,4 +1,3 @@
-
 import Physar from 'physar'
 
 const Scene = require('Scene');
@@ -62,5 +61,10 @@ physar.createObject(plane, 'ground', groundProps)
 const sphereID = physar.createObject(sphere, 'sphere', sphereProps)
 const boxID = physar.createObject(cube, 'box', cubeProps)
 
-const constraint = physar.addConstraint('point', sphereID, boxID)
+const constraintProps = {
+  bodyA: sphereID,
+  bodyB: boxID
+}
+
+const constraint = physar.createConstraint('point', constraintProps)
 physar.start()

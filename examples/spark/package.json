@@ -10,6 +10,7 @@
     "start": "npm run dev"
   },
   "dependencies": {
+    "core-js": "^3.6.4",
     "physar": "file:../..",
     "short-uuid": "^3.1.1",
     "webpack": "^4.41.6"
@@ -23,7 +24,6 @@
     "babel-core": "^7.0.0-bridge.0",
     "babel-loader": "^8.0.0-beta.6",
     "babel-plugin-transform-class-properties": "^6.24.1",
-    "core-js": "^2.5.2",
     "regenerator-runtime": "^0.13.3",
     "webpack-cli": "^3.3.11"
   }
