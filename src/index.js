@@ -215,7 +215,6 @@ export default class Physar {
           // write euler angles to rotation
           wObj.body.quaternion.toEuler(rotation)
           
-  
           syncProps.forEach(prop => {
             if(wObj.sync[prop].enabled) {
               syncAxes.forEach( axis => {
@@ -302,9 +301,17 @@ export default class Physar {
     return this.addObjectToPhysicsWorld(CObj, spObj, sync, type == 'ground')
   }
 
-  find(type = 'object' | 'constraint', id) {
-    if(type == 'object') return this.worldObjects.find( w => w.id == id )
-    if(type == 'constraint') return this.worldConstraints.find( c => c.id == id )
+  find(type, id) {
+    if(type == 'object') {
+      for(var i = 0; i < this.worldObjects.length; i++) {
+        if(this.worldObjects[i].id == id) return this.worldObjects[i];
+      }
+    }
+    if(type == 'constraint') {
+      for(var i = 0; i < this.worldConstraints.length; i++) {
+        if(this.worldConstraints[i].id == id) return this.worldConstraints[i];
+      }
+    }
   }
   /*
     {
@@ -322,7 +329,7 @@ export default class Physar {
     // We need at least two bodies to make a constraint.
     if ( !params.bodyA || !params.bodyB) return
     
-    let [bodyA, bodyB, pivotA, pivotB, axisA, axisB] = params
+    let { bodyA, bodyB, pivotA, pivotB, axisA, axisB } = params
     const options = {
       pivotA,
       pivotB,
@@ -333,18 +340,21 @@ export default class Physar {
     const tempA = this.find('object', bodyA)
     const tempB = this.find('object', bodyB)
 
-    if (!tempA || !tempB) return
+    if (!tempA || !tempB) {
+      this.log("Bodies where not found.")
+      return;
+    }
     
     let constraint 
     switch(type) {
       case 'point':
-        constraint = new this.C.PointToPointConstraint(bodyA, pivotA, bodyB, pivotB)
+        constraint = new this.C.PointToPointConstraint(tempA.body, pivotA, tempB.body, pivotB)
         break
       case 'hinge':
-        constraint = new this.C.HingeConstraint(bodyA, bodyB, options)
+        constraint = new this.C.HingeConstraint(tempA.body, tempB.body, options)
         break
       case 'conetwist':
-        constraint = new this.C.ConeTwistConstraint(bodyA, bodyB, options)
+        constraint = new this.C.ConeTwistConstraint(tempA.body, tempB.body, options)
         break
       case 'lock':
         constraint = new this.C.LockConstraint(pivotA, pivotB, {})
@@ -353,26 +363,28 @@ export default class Physar {
         return
     }
     
-    return this.addConstraint(constraint, tempA, tempB)
+    return this.addConstraintToWorld(constraint, tempA.id, tempB.id)
   }
 
-  addConstraint(constraint, tempA, tempB) {
+  addConstraintToWorld(constraint, idA, idB) {
 
-    if(!tempA.body || !tempB.body) return undefined
-
-    const bodyA = tempA.body
-    const bodyB = tempB.body
+    if(!idA || !idB) return undefined
     
     this.world.addConstraint(constraint)
 
-    // bodyA and bodyB id concatenation with base64 encoding.
-    const id = btoa(`${bodyA.id}.${bodyB.id}`)
+    this.log("Added constraint to world.")
 
-    this.worldConstraints.push({
+    // bodyA and bodyB id concatenation with base64 encoding.
+    const id = new Buffer.from(`${idA}.${idB}`).toString('base64')
+
+    const newConstraint = {
       id,
       constraint,
       isActive: true
-    })
+    }
+    this.worldConstraints.push(newConstraint)
+
+    // this.log(newConstraint)
 
     return id
   }
