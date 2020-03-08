@@ -5,20 +5,21 @@ export default class Physar {
   constructor( gravity ) {
 
       // Spark related
-      this.Diagnostics = undefined;
-      this.Time = undefined;
-          this.currentInterval = undefined;
-          this.lastInterval = undefined;
-          this.lastTime = undefined;
-          this.fixedTimeStep = 1.0 / 60.0;
-          this.maxSubSteps = 3;
-          this.timeInterval = 5;
+      this.Diagnostics = undefined
+      this.Time = undefined
+          this.currentInterval = undefined
+          this.lastInterval = undefined
+          this.lastTime = undefined
+          this.fixedTimeStep = 1.0 / 60.0
+          this.maxSubSteps = 3
+          this.timeInterval = 5
 
-      this.CANNON = undefined;
-          // this.world = undefined;
+      this.C = undefined
+          // this.world = undefined
 
       // World related
-      this.worldObjects = [];
+      this.worldObjects = []
+      this.worldConstraints = []
 
       // Defaults
       this.defaults = {
@@ -30,7 +31,7 @@ export default class Physar {
                       x: 0,
                       y: 0,
                       z: 0,
-                      w: 0.5 // CANNON defaults to 1, don't really know why i'm setting it to 0.5 but we'll see.
+                      w: 0.5 // C defaults to 1, don't really know why i'm setting it to 0.5 but we'll see.
                   },
                   position: {
                       x: 0,
@@ -65,19 +66,19 @@ export default class Physar {
       }
 
     this.initRequiredSparkModules()
-    this.createCannonWorld(gravity)
+    this.createCWorld(gravity)
 
   }
 
   initRequiredSparkModules() {
     this.Time = require('Time')
-    this.CANNON = require('cannon')
+    this.C = require('cannon')
     this.Diagnostics = require('Diagnostics')
   }
 
-  createCannonWorld(g) {
-    this.world = new this.CANNON.World();
-    this.world.broadphase = new this.CANNON.NaiveBroadphase();
+  createCWorld(g) {
+    this.world = new this.C.World()
+    this.world.broadphase = new this.C.NaiveBroadphase()
 
     this.world.gravity.set( g.x, g.y, g.z )
   }
@@ -86,7 +87,7 @@ export default class Physar {
     // Copy original state of worldObjects
 
     this.initialWorldState = this.worldObjects
-    // Create time interval loop for cannon 
+    // Create time interval loop for C 
     this.currentInterval = this.Time.setInterval(time => {
       if(this.lastTime !== undefined) {
         let deltaTime = (time - this.lastTime) / 1000
@@ -136,8 +137,8 @@ export default class Physar {
   stopSync() {
     if(this.currentInterval) {
       this.Time.clearInterval(this.currentInterval)
-      this.lastInterval = currentInterval;
-      this.currentInterval = undefined;
+      this.lastInterval = currentInterval
+      this.currentInterval = undefined
     }
     this.resetWorldState()
   }
@@ -146,7 +147,7 @@ export default class Physar {
       if(!key)
           return this.defaults
       else
-          return this.defaults[key];
+          return this.defaults[key]
   }
 
   // Deep merge properties object filling missing values with defaults.  
@@ -201,7 +202,7 @@ export default class Physar {
         currentBody.quaternion = originalBody.quaternion
         currentBody.position = originalBody.position
 
-        //Reset cannon object to original state
+        //Reset C object to original state
         
         
         if(wObj.spark) {
@@ -247,22 +248,22 @@ export default class Physar {
     const scale = transform.scale
  
     const pos = transform.position
-    const position = new this.CANNON.Vec3(pos.x, pos.y, pos.z)
+    const position = new this.C.Vec3(pos.x, pos.y, pos.z)
 
     
-    const quaternion = new this.CANNON.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)
+    const quaternion = new this.C.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)
     
     const buildShape = type => {
       switch(type) {
         case 'box':
-          return new this.CANNON.Box(new this.CANNON.Vec3(scale.x, scale.y, scale.z))
-          break;
+          return new this.C.Box(new this.C.Vec3(scale.x, scale.y, scale.z))
+          break
         case 'sphere':
-          return new this.CANNON.Sphere(radius)
-          break;
+          return new this.C.Sphere(radius)
+          break
         case 'ground':
-          return new this.CANNON.Plane()
-          break;
+          return new this.C.Plane()
+          break
       }
     }
 
@@ -286,19 +287,132 @@ export default class Physar {
     }
 
     const buildBody = (type) => {
-      const cBody = new this.CANNON.Body(buildProps(buildShape(type)))
+      const cBody = new this.C.Body(buildProps(buildShape(type)))
       if( type == 'ground') {
           // Rotate the ground so it is flat (facing upwards)
-          const angle = -Math.PI / 2;
-          const xAxis = new this.CANNON.Vec3(1, 0, 0);
-          cBody.quaternion.setFromAxisAngle(xAxis, angle);
+          const angle = -Math.PI / 2
+          const xAxis = new this.C.Vec3(1, 0, 0)
+          cBody.quaternion.setFromAxisAngle(xAxis, angle)
       }
       return cBody
     }
 
-    const cannonObj = buildBody(type)
+    const CObj = buildBody(type)
 
-    this.addObjectToPhysicsWorld(cannonObj, spObj, sync, type == 'ground')
+    return this.addObjectToPhysicsWorld(CObj, spObj, sync, type == 'ground')
+  }
+
+  find(type = 'object' | 'constraint', id) {
+    if(type == 'object') return this.worldObjects.find( w => w.id == id )
+    if(type == 'constraint') return this.worldConstraints.find( c => c.id == id )
+  }
+  /*
+    {
+      bodyA: Body
+      bodyB: Body
+      pivotA: { x: 0, y: 0, z: 0 }
+      pivotB: { x: 0, y: 0, z: 0 }
+      axisA: { x: 0, y: 0, z: 0 }
+      axisB: { x: 0, y: 0, z: 0 }
+      collideConnected: Boolean
+    }
+  */
+  createConstraint(type, params = {}) {
+
+    // We need at least two bodies to make a constraint.
+    if ( !params.bodyA || !params.bodyB) return
+    
+    let { bodyA, bodyB, pivotA, pivotB, axisA, axisB } = params
+    const options = {
+      pivotA,
+      pivotB,
+      axisA,
+      axisB
+    }
+
+    const tempA = this.find('object', bodyA)
+    const tempB = this.find('object', bodyB)
+
+    if (!tempA || !tempB) return
+    
+    let constraint 
+    switch(type) {
+      case 'point':
+        constraint = new this.C.PointToPointConstraint(bodyA, pivotA, bodyB, pivotB)
+        break
+      case 'hinge':
+        constraint = new this.C.HingeConstraint(bodyA, bodyB, options)
+        break
+      case 'conetwist':
+        constraint = new this.C.ConeTwistConstraint(bodyA, bodyB, options)
+        break
+      case 'lock':
+        constraint = new this.C.LockConstraint(pivotA, pivotB, {})
+        break
+      default:
+        return
+    }
+    
+    return this.addConstraint(constraint, tempA, tempB)
+  }
+
+  addConstraint(constraint, tempA, tempB) {
+
+    if(!tempA.body || !tempB.body) return undefined
+
+    const bodyA = tempA.body
+    const bodyB = tempB.body
+    
+    this.world.addConstraint(constraint)
+
+    // bodyA and bodyB id concatenation with base64 encoding.
+    const id = btoa(`${bodyA.id}.${bodyB.id}`)
+
+    this.worldConstraints.push({
+      id,
+      constraint,
+      isActive = true
+    })
+
+    return id
+  }
+
+  removeConstraint(id, fullWipe = false) {
+    const c = this.find('constraint', id)
+
+    if(c) {
+      this.world.removeConstraint(c.constraint)
+    }
+
+    if(!!fullWipe) {
+      const idx = this.worldConstraints.indexOf(c)
+      this.worldConstraints.splice(idx, 1)
+    }
+
+  }
+
+  pauseConstraint(id) {
+    const c = this.find('constraint', id)
+
+    if(c) {
+      this.removeConstraint(id, false)
+    }
+
+    const idx = this.worldConstraints.indexOf(c)
+    this.worldConstraints[idx].isActive = false
+  }
+
+  resumeConstraint(id) {
+    const c = this.find('constraint', id)
+    const {id, constraint} = c
+
+    if(c && c.isActive == false) {
+
+      this.world.addConstraint(constraint)
+      
+      const idx = this.worldConstraints.indexOf(c)
+      this.worldConstraints[idx].isActive = true
+    }
   }
 
   log(string) {
@@ -307,35 +421,35 @@ export default class Physar {
 
   
   addObjectToPhysicsWorld(rbdBody, sparkObject, syncOptions, isGround) {
-    this.world.addBody(rbdBody);
+    this.world.addBody(rbdBody)
     const sync = { ...this.getDefaults('sync'), ...syncOptions }
     
     const id = generateUUID()
     
     const newObject = {
+      id,
       body: rbdBody,
       spark: sparkObject, 
       sync,
-      isGround,
-      id
+      isGround
     }
 
-    this.worldObjects.push(newObject);
+    this.worldObjects.push(newObject)
 
-    return newObject;
+    return id
   }
 
-  createCannonMaterial(parameters) {
-    let material = undefined; 
+  createCMaterial(parameters) {
+    let material = undefined 
 
     if (parameters == undefined) {
-      material = new this.CANNON.Material();
+      material = new this.C.Material()
     }
     
     return material
   }
 
   start() {
-    this.beginSync();
+    this.beginSync()
   }
 }
