@@ -37,7 +37,7 @@ const gravity = {
 };
 const physar = new Physar(gravity);
 ```
-<i>-9.82 m/s<sup>2</sup> is the average measure of the strength of Earth's gravitational field. You can set a higher negative or positive value no any axis to enhance the strength and direction of the physics in your scene.</i>
+<i>-9.82 m/s<sup>2</sup> is the average measure of the strength of Earth's gravitational field. You can set a higher negative or positive value on any axis to enhance the strength and direction of the physics in your scene.</i>
 
 Import your spark object reference. In this case, a sphere that was imported from the AR Library:
 ```js
