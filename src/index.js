@@ -404,7 +404,7 @@ export default class Physar {
 
   resumeConstraint(id) {
     const c = this.find('constraint', id)
-    const [id, constraint] = c
+    const constraint = c.constraint
 
     if(c && c.isActive == false) {
 
