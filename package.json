@@ -1,6 +1,6 @@
 {
   "name": "physar",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "main": "src/index.js",
   "author": "Dilip Ramirez <dilip.ramirez@gmail.com>",
   "license": "ISC",
