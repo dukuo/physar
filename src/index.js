@@ -1,4 +1,4 @@
-import { generateUUID } from './utils'
+import { generateUUID, base64 } from './utils'
 
 export default class Physar {
   
@@ -324,18 +324,24 @@ export default class Physar {
       collideConnected: Boolean
     }
   */
-  createConstraint(type, params = {}) {
+  createConstraint(type, params) {
 
     // We need at least two bodies to make a constraint.
     if ( !params.bodyA || !params.bodyB) return
-    
-    let { bodyA, bodyB, pivotA, pivotB, axisA, axisB } = params
-    const options = {
-      pivotA,
-      pivotB,
-      axisA,
-      axisB
-    }
+    this.log(params)
+    let {
+      bodyA,
+      bodyB } = params
+
+    const options = params
+
+    Object.keys(options).forEach((o, i) => {
+      const {x, y, z} = options[o]
+
+      options[o] = this.getVec3(options[o])
+    })
+
+    let { pivotA, pivotB, axisA, axisB } = options
 
     const tempA = this.find('object', bodyA)
     const tempB = this.find('object', bodyB)
@@ -357,7 +363,7 @@ export default class Physar {
         constraint = new this.C.ConeTwistConstraint(tempA.body, tempB.body, options)
         break
       case 'lock':
-        constraint = new this.C.LockConstraint(pivotA, pivotB, {})
+        constraint = new this.C.LockConstraint(tempA.body, tempB.body, {})
         break
       default:
         return
@@ -375,7 +381,7 @@ export default class Physar {
     this.log("Added constraint to world.")
 
     // bodyA and bodyB id concatenation with base64 encoding.
-    const id = new Buffer.from(`${idA}.${idB}`).toString('base64')
+    const id = base64.encode(`${idA}.${idB}`)
 
     const newConstraint = {
       id,
@@ -384,7 +390,7 @@ export default class Physar {
     }
     this.worldConstraints.push(newConstraint)
 
-    // this.log(newConstraint)
+    this.log(`Constraint ${id} added to world.`)
 
     return id
   }
@@ -403,27 +409,26 @@ export default class Physar {
 
   }
 
-  pauseConstraint(id) {
+  disableConstraint(id) {
     const c = this.find('constraint', id)
 
     if(c) {
-      this.removeConstraint(id, false)
+      const idx = this.worldConstraints.indexOf(c)
+      this.worldConstraints[idx].isActive = false
+      this.worldConstraints[idx].constraint.disable()
     }
 
-    const idx = this.worldConstraints.indexOf(c)
-    this.worldConstraints[idx].isActive = false
+    
   }
 
-  resumeConstraint(id) {
+  enableConstraint(id) {
     const c = this.find('constraint', id)
     const constraint = c.constraint
 
     if(c && c.isActive == false) {
-
-      this.world.addConstraint(constraint)
-
       const idx = this.worldConstraints.indexOf(c)
       this.worldConstraints[idx].isActive = true
+      this.worldConstraints[idx].enable()
     }
   }
 
@@ -459,6 +464,11 @@ export default class Physar {
     }
     
     return material
+  }
+
+  getVec3(vec) {
+    const {x, y, z} = vec
+    return new this.C.Vec3(x, y, z)
   }
 
   start() {
