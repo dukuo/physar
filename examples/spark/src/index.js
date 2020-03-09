@@ -1,6 +1,7 @@
 import Physar from 'physar'
 
 const Scene = require('Scene');
+const Time = require('Time')
 
 const sphere = Scene.root.find('SphereObject');
 const cube = Scene.root.find('Cube01')
@@ -63,8 +64,13 @@ const boxID = physar.createObject(cube, 'box', cubeProps)
 
 const constraintProps = {
   bodyA: sphereID,
-  bodyB: boxID
+  bodyB: boxID,
+  pivotA: sphereProps.body.transform.position
 }
 
-const constraint = physar.createConstraint('point', constraintProps)
+const constraint = physar.createConstraint('lock', constraintProps)
+
+Time.setTimeout(function() {
+  physar.disableConstraint(constraint)
+}, 5000)
 physar.start()
